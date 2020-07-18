@@ -1,0 +1,19 @@
+
+#app {
+    max-width: 8in;
+    margin: auto;
+}
+
+html {
+}
+
+.taskitem {
+    padding: 1em;
+    margin: 1em 0 1em 0;
+    background-color: white;
+    border-left: 3px solid white;
+}
+
+.active {
+    border-left: 3px solid blue;
+}

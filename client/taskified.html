@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="taskified.css">
+        <script src="vue.js"></script>
+        <script src="marked.min.js"></script>
+        <title>Taskified</title>
+    </head>
+    <body>
+        <div id="app"
+             tabindex="-1"
+             @keydown="handleGlobalKey">
+            <div
+                class="taskitem"
+                v-for="todo in todos"
+                v-bind:class="{ active: todo.selected }"
+                :ref="'badges_' + todo.uid"
+                @mousedown="handleItemClick(todo)">
+                <div v-html="todo.rendered"
+                     v-if="!todo.editable"
+                     class="todo-render">
+                </div>
+                <textarea :ref="'textareas_' + todo.uid"
+                          @keydown="function(event) { return handleEditorKey(todo, event) }"
+                          v-if="todo.editable"
+                          class="todo-editor">
+                </textarea>
+            </div>
+        </div>
+        <script src="taskified.js"></script>
+    </body>
+</html>
