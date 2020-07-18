@@ -8,11 +8,11 @@
     display: table-row;
 }
 
-.todo-render, .todo-editor {
+.todo-render, .todo-editor-container {
     width: 8in;
 }
 
-.todo-state, .todo-render, .todo-editor, todo-date {
+.todo-state, .todo-render, .todo-editor-container, todo-date {
     display: table-cell;
     vertical-align: top;
 }
@@ -31,8 +31,8 @@ html {
 }
 
 .todo-render, .todo-state, .todo-date {
-    padding: .2em 1em .2em .5em;
-    margin: 1em 0 1em 0;
+    padding: .2rem 1rem .2rem .5rem;
+    margin: 1rem 0 1rem 0;
 }
 
 .todo-render {
@@ -40,7 +40,7 @@ html {
 }
 
 .todo-state {
-    padding: .2em .5em .2em 1em;
+    padding: .2rem .5rem .2rem 1rem;
     text-align: right;
 }
 
@@ -61,14 +61,11 @@ html {
 .todo-date {
     color: gray;
     white-space: nowrap;
+    font-size: .6em;
 }
 
 .CodeMirror, .CodeMirror-scroll {
 	  min-height: 0;
-}
-
-.CodeMirror {
-    display: table-cell;
 }
 
 #statusbar-container {

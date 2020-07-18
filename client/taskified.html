@@ -24,12 +24,16 @@
                          v-if="!todo.editable"
                          class="todo-render">
                     </div>
-                    <textarea :ref="'textareas_' + todo.uid"
-                              v-if="todo.editable"
-                              class="todo-editor">
-                    </textarea>
+                    <div v-if="todo.editable" class="todo-editor-container">
+                        <simplemde class="todo-editor"
+                                   :ref="'textareas_' + todo.uid"
+                                   @notify="handleEditorChange(todo)"
+                                   v-model="todo.original">
+                        </simplemde>
+                    </div>
                     <div class="todo-date">
-                        {{todo.formattedDate}}
+                        {{todo.formattedCreateDate}}<br />
+                        <span v-if="todo.modified"><span style="position: absolute; transform: translateX(-100%)">(</span>{{todo.formattedModDate}})</span>
                     </div>
                 </div>
             </div>

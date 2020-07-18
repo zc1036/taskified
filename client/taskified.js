@@ -9,6 +9,14 @@ function markdown(text) {
     return marked(sanitizeHtml(text))
 }
 
+function datesEqual(a, b) {
+    return (a.year == b.year
+            && a.month == b.month
+            && a.day == b.day
+            && a.hour == b.hour
+            && a.minute == b.minute);
+}
+
 function formatDate(date) {
     var today = new Date()
 
@@ -45,15 +53,24 @@ function formatDate(date) {
     return '' + (date.month + 1) + '/' + date.day + '/' + date.year
 }
 
-function setDate(todo, date) {
-    todo.date = {
+function makeJsonFromDate(date) {
+    return {
         minute: date.getMinutes(),
         hour: date.getHours(),
         day: date.getDate(),
         month: date.getMonth(),
         year: date.getFullYear()
     }
-    todo.formattedDate = formatDate(todo.date)
+}
+
+function setModDate(todo, date) {
+    todo.modDate = makeJsonFromDate(date)
+    todo.formattedModDate = formatDate(todo.modDate)
+}
+
+function setCreateDate(todo, date) {
+    todo.createDate = makeJsonFromDate(date)
+    todo.formattedCreateDate = formatDate(todo.createDate)
 }
 
 function maketodo() {
@@ -65,17 +82,56 @@ function maketodo() {
         rendered: markdown('yark'),
         editable: false,
         selected: false,
+        modified: false,
         uid: Math.random().toString(36).substring(2, 15)
     }
 
-    setDate(todo, date)
+    setCreateDate(todo, date)
+    setModDate(todo, date)
 
     return todo
 }
 
 function setTodoStatus(a) {
-    this.activeElement.status = a.text
+    this.getSelectedTodos().forEach(todo => todo.status = a.text)
 }
+
+// This component mostly taken from https://megalomaniacslair.co.uk/pairing-simplemde-and-vuejs/
+Vue.component('simplemde', {
+    props: ['value'],
+    template: `
+       <textarea ref="area"></textarea>
+    `,
+    mounted() {
+        this.mde = new SimpleMDE({ element: this.$refs.area,
+                                   shortcuts: { },
+                                   autofocus: true,
+                                   toolbar: false,
+                                   spellChecker: false,
+                                   status: false })
+        this.mde.value(this.value)
+        this.mde.codemirror.on('changes', () => this.$emit('input', this.mde.value()))
+    },
+    watch: {
+        // Setup a watch to track changes,
+        // and only update when changes are made
+        value(newVal) {
+            this.$emit('notify', newVal)
+            if (newVal != this.mde.value()) {
+                this.mde.value(newVal)
+            }
+        }
+    },
+    beforeDestroy() {
+        // Clean up when the component gets destroyed
+
+        // NOTE: Uncommenting this causes an error when you delete a
+        // TODO that is located in the list BEFORE/ABOVE the todo being
+        // edited.
+
+        //this.mde.toTextArea()
+    }
+})
 
 var app = new Vue({
     el: '#app-container',
@@ -104,7 +160,7 @@ var app = new Vue({
               text: '⇨',
               action: setTodoStatus }
         ],
-        activeContexts: [ ]
+        activeContexts: [ ],
     },
     methods: {
         getSelectedTodos() {
@@ -166,6 +222,7 @@ var app = new Vue({
 
         deleteTodo(todo) {
             todo.selected = false
+            todo.editable = false
             var idx = this.getTodoIdx(todo)
 
             this.todos.splice(idx, 1)
@@ -189,8 +246,10 @@ var app = new Vue({
         handleEditorKey(todo, ed, event) {
             var ta = this.$refs['textareas_' + todo.uid][0]
 
-            if (event.key == "Enter" && event.ctrlKey) {
-                todo.original = ed.value()
+            if (event.key == 'Escape'
+                || event.key == "Enter" && event.ctrlKey)
+            {
+                //todo.original = ed.value()
                 todo.rendered = markdown(todo.original)
                 ed.toTextArea()
                 todo.editable = false
@@ -198,6 +257,11 @@ var app = new Vue({
                 event.stopPropagation()
                 event.preventDefault()
             }
+        },
+
+        handleEditorChange(todo) {
+            setModDate(todo, new Date())
+            todo.modified = !datesEqual(todo.modDate, todo.createDate)
         },
 
         handleGlobalKey(event) {
@@ -249,22 +313,20 @@ var app = new Vue({
                 break
 
             case 'Enter':
-                var todos = this.getSelectedTodos()
+                var todos = this.getSelectedTodos().filter(todo => !todo.editable)
                 todos.forEach(todo => todo.editable = true)
                 event.preventDefault()
 
                 Vue.nextTick(
                     () =>
                         todos.forEach(todo => {
-                            var ta = this.$refs['textareas_' + this.activeElement.uid][0]
-                            var ed = new SimpleMDE({ element: ta,
-                                                     shortcuts: { },
-                                                     initialValue: todo.original,
-                                                     autofocus: true,
-                                                     toolbar: false,
-                                                     spellChecker: false,
-                                                     status: false })
+                            var ta = this.$refs['textareas_' + todo.uid][0]
+                            var ed = ta.mde
+
+                            ed.value(todo.original)
+
                             ed.codemirror.on('keydown', (mirror, e) => {
+                                e.stopPropagation()
                                 this.handleEditorKey(todo, ed, e)
                             })
                         })
@@ -356,8 +418,8 @@ var app = new Vue({
                     this.clearSelection()
 
                     pkg.forEach(
-                        old => {
-                            this.todos.splice(old.idx, 0, old.todo)
+                        (old, idx) => {
+                            this.todos.splice(old.idx + idx, 0, old.todo)
                             this.handleItemClick(old.todo, true)
                         }
                     )
