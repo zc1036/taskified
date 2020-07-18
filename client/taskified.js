@@ -81,6 +81,7 @@ var app = new Vue({
     el: '#app-container',
     data: {
         todos: [ ],
+        deletedTodos: [ ],
         activeElement: null,
         activeStatusShortcuts: [ ],
         setTodoStateShortcuts: [
@@ -97,6 +98,12 @@ var app = new Vue({
               text: '',
               pretty: '[clear]',
               action: setTodoStatus },
+            { shortcut: 'f',
+              text: '⮕',
+              action: setTodoStatus },
+            { shortcut: 'b',
+              text: '⇨',
+              action: setTodoStatus }
         ],
         activeContexts: [ ]
     },
@@ -120,13 +127,24 @@ var app = new Vue({
             return this.todos[i]
         },
 
-        getActiveIdx(todo) {
+        getTodoIdx(todo) {
             for (var i = 0; i < this.todos.length; ++i) {
                 if (this.todos[i] == todo) {
                     return i;
                 }
             }
             return 0;
+        },
+
+        deleteTodo(todo) {
+            todo.selected = false
+            var idx = this.getTodoIdx(todo)
+
+            this.todos.splice(idx, 1)
+
+            if (this.activeElement == todo) {
+                this.activeElement = null
+            }
         },
 
         handleItemClick(todo) {
@@ -240,7 +258,7 @@ var app = new Vue({
 
             case 'n':
             case 'ArrowDown':
-                var idx = this.getActiveIdx(todo)
+                var idx = this.getTodoIdx(todo)
                 var newtodo = this.getTodoFromIdx(idx + 1)
 
                 if (newtodo) {
@@ -250,11 +268,32 @@ var app = new Vue({
 
             case 'p':
             case 'ArrowUp':
-                var idx = this.getActiveIdx(todo)
+                var idx = this.getTodoIdx(todo)
                 var newtodo = this.getTodoFromIdx(idx - 1)
 
                 if (newtodo) {
                     this.handleItemClick(newtodo)
+                }
+                break
+
+            case 'k':
+                if (this.activeElement) {
+                    var idx = this.getTodoIdx(this.activeElement)
+                    this.deletedTodos.push({ todo: this.activeElement, idx: idx })
+                    this.deleteTodo(this.activeElement)
+                    var newtodo = this.getTodoFromIdx(idx)
+                    if (newtodo) {
+                        this.handleItemClick(newtodo)
+                    } 
+                }
+                break
+
+            case 'u':
+                var old = this.deletedTodos.pop()
+
+                if (old) {
+                    this.todos.splice(old.idx, 0, old.todo)
+                    this.handleItemClick(old.todo)
                 }
                 break
 
