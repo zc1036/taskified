@@ -82,7 +82,6 @@ var app = new Vue({
     data: {
         todos: [ ],
         deletedTodos: [ ],
-        activeElement: null,
         activeStatusShortcuts: [ ],
         setTodoStateShortcuts: [
             { shortcut: 'c',
@@ -108,6 +107,35 @@ var app = new Vue({
         activeContexts: [ ]
     },
     methods: {
+        getSelectedTodos() {
+            return this.todos.filter(todo => todo.selected)
+        },
+
+        saveState() {
+            window.localStorage.setItem('todos', JSON.stringify(this.todos))
+            window.localStorage.setItem('deletedtodos', JSON.stringify(this.deletedTodos))
+        },
+
+        loadStateFromLocalStorage() {
+            var todos = window.localStorage.getItem('todos')
+
+            if (todos) {
+                this.todos = JSON.parse(todos)
+            }
+
+            var deletedTodos = window.localStorage.getItem('deletedtodos')
+
+            if (deletedTodos) {
+                this.deletedTodos = JSON.parse(deletedTodos)
+            }
+
+            this.postLoadState()
+        },
+
+        postLoadState() {
+            this.clearSelection()
+        },
+
         getTodoFromIdx(i) {
             var last = null
             var first = null
@@ -141,18 +169,21 @@ var app = new Vue({
             var idx = this.getTodoIdx(todo)
 
             this.todos.splice(idx, 1)
-
-            if (this.activeElement == todo) {
-                this.activeElement = null
-            }
         },
 
-        handleItemClick(todo) {
+        clearSelection() {
             this.todos.forEach((todo) => todo.selected = false)
+        },
+
+        handleItemClick(todo, shiftKey) {
+            if (!shiftKey) {
+                this.clearSelection()
+            }
 
             todo.selected = true
 
-            this.activeElement = todo
+            Vue.nextTick(() =>
+                         this.$refs['badges_' + todo.uid][0].scrollIntoView({block: 'nearest'}))
         },
 
         handleEditorKey(todo, ed, event) {
@@ -204,17 +235,13 @@ var app = new Vue({
         },
 
         handleTodoKey(event) {
-            if (this.activeElement && this.activeElement.editable) {
-                return
-            }
-
-            var todo = this.activeElement
-
             switch (event.key) {
             case 's':
-                if (!this.activeElement) {
+                if (event.ctrlKey) {
+                    this.saveState()
                     break
                 }
+
                 this.activeContexts.push((e) => this.handleStatusKey(e))
                 this.activeStatusShortcuts = this.setTodoStateShortcuts
                 event.preventDefault()
@@ -222,78 +249,118 @@ var app = new Vue({
                 break
 
             case 'Enter':
-                if (!todo) return;
-                todo.editable = true
+                var todos = this.getSelectedTodos()
+                todos.forEach(todo => todo.editable = true)
                 event.preventDefault()
 
                 Vue.nextTick(
-                    () => {
-                        var ta = this.$refs['textareas_' + this.activeElement.uid][0]
-                        var ed = new SimpleMDE({ element: ta,
-                                                 shortcuts: { },
-                                                 initialValue: todo.original,
-                                                 autofocus: true,
-                                                 toolbar: false,
-                                                 spellChecker: false,
-                                                 status: false })
-                        ed.codemirror.on('keydown', (mirror, e) => {
-                            this.handleEditorKey(todo, ed, e)
+                    () =>
+                        todos.forEach(todo => {
+                            var ta = this.$refs['textareas_' + this.activeElement.uid][0]
+                            var ed = new SimpleMDE({ element: ta,
+                                                     shortcuts: { },
+                                                     initialValue: todo.original,
+                                                     autofocus: true,
+                                                     toolbar: false,
+                                                     spellChecker: false,
+                                                     status: false })
+                            ed.codemirror.on('keydown', (mirror, e) => {
+                                this.handleEditorKey(todo, ed, e)
+                            })
                         })
-                    }
                 )
 
                 break
 
+            case 'G':
+                var lasttodo = this.getTodoFromIdx(this.todos.length)
+                if (lasttodo) {
+                    this.handleItemClick(lasttodo)
+                }
+                
+                break
+
             case 'g':
                 if (!event.ctrlKey) {
+                    var firsttodo = this.getTodoFromIdx(0)
+
+                    if (firsttodo) {
+                        this.handleItemClick(firsttodo)
+                    }
                     break
                 }
+                // fallthrough
 
             case 'Escape':
-                if (this.activeElement) {
-                    this.activeElement.selected = false
-                    this.activeElement = null
-                }
+                this.getSelectedTodos().forEach(todo => todo.selected = false)
                 break
 
             case 'n':
+            case 'N':
             case 'ArrowDown':
-                var idx = this.getTodoIdx(todo)
-                var newtodo = this.getTodoFromIdx(idx + 1)
+                if (this.todos.length > 0) {
+                    var selected = this.getSelectedTodos()
+                    var idx = this.getTodoIdx(selected[selected.length - 1])
+                    var newtodo = this.getTodoFromIdx(idx + 1)
 
-                if (newtodo) {
-                    this.handleItemClick(newtodo)
+                    if (newtodo) {
+                        this.handleItemClick(newtodo, event.shiftKey)
+                    }
                 }
                 break
 
+            case 'P':
             case 'p':
             case 'ArrowUp':
-                var idx = this.getTodoIdx(todo)
-                var newtodo = this.getTodoFromIdx(idx - 1)
+                if (this.todos.length > 0) {
+                    var selected = this.getSelectedTodos()
+                    var idx = this.getTodoIdx(selected[0])
+                    var newtodo = this.getTodoFromIdx(idx - 1)
 
-                if (newtodo) {
-                    this.handleItemClick(newtodo)
+                    if (newtodo) {
+                        this.handleItemClick(newtodo, event.shiftKey)
+                    }
                 }
                 break
 
             case 'k':
-                if (this.activeElement) {
-                    var idx = this.getTodoIdx(this.activeElement)
-                    this.deletedTodos.push({ todo: this.activeElement, idx: idx })
-                    this.deleteTodo(this.activeElement)
-                    var newtodo = this.getTodoFromIdx(idx)
+                var selected = this.getSelectedTodos()
+
+                if (selected.length) {
+                    var lasttodo = selected[selected.length - 1]
+                    var lastidx = this.getTodoIdx(lasttodo)
+                    
+                    var deleted = selected.map(
+                        todo => {
+                            var idx = this.getTodoIdx(todo)
+                            this.deleteTodo(todo)
+                            return { todo: todo, idx: idx }
+                        }
+                    )
+
+                    this.deletedTodos.push(deleted)
+
+                    var newtodo = this.getTodoFromIdx(lastidx)
+
                     if (newtodo) {
                         this.handleItemClick(newtodo)
-                    } 
+                    }
                 }
+
                 break
 
             case 'u':
-                var old = this.deletedTodos.pop()
+                var pkg = this.deletedTodos.pop()
 
-                if (old) {
-                    this.todos.splice(old.idx, 0, old.todo)
-                    this.handleItemClick(old.todo)
+                if (pkg) {
+                    this.clearSelection()
+
+                    pkg.forEach(
+                        old => {
+                            this.todos.splice(old.idx, 0, old.todo)
+                            this.handleItemClick(old.todo, true)
+                        }
+                    )
                 }
                 break
 
@@ -307,5 +374,6 @@ var app = new Vue({
         console.log('yes')
         window.addEventListener('keydown', (e) => this.handleGlobalKey(e))
         this.activeContexts.push((e) => this.handleTodoKey(e))
+        this.loadStateFromLocalStorage()
     }
 })

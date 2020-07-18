@@ -18,7 +18,7 @@
                     v-for="todo in todos"
                     v-bind:class="{ active: todo.selected }"
                     :ref="'badges_' + todo.uid"
-                    @mousedown="handleItemClick(todo)">
+                    @mousedown="e => handleItemClick(todo, e.shiftKey)">
                     <div class="todo-state"><p>{{todo.status}}</p></div>
                     <div v-html="todo.rendered"
                          v-if="!todo.editable"
