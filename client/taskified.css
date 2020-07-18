@@ -1,19 +1,87 @@
 
 #app {
-    max-width: 8in;
     margin: auto;
-}
-
-html {
+    display: table;
 }
 
 .taskitem {
-    padding: 1em;
+    display: table-row;
+}
+
+.todo-render, .todo-editor {
+    width: 8in;
+}
+
+.todo-state, .todo-render, .todo-editor, todo-date {
+    display: table-cell;
+    vertical-align: top;
+}
+
+html, body {
+    padding: 0;
+    margin: 0;
+}
+
+html {
+    font-family: open sans, helvetica neue, Helvetica, Arial, sans-serif
+}
+
+.taskitem p {
+    padding: 0;
+}
+
+.todo-render, .todo-state, .todo-date {
+    padding: .2em 1em .2em .5em;
     margin: 1em 0 1em 0;
-    background-color: white;
+}
+
+.todo-render {
     border-left: 3px solid white;
 }
 
-.active {
+.todo-state {
+    padding: .2em .5em .2em 1em;
+    text-align: right;
+}
+
+.active > .todo-render {
     border-left: 3px solid blue;
+}
+
+.todo-editor {
+    width: 100%;
+    overflow: auto;
+    outline: none;
+
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+}
+
+.todo-date {
+    color: gray;
+    white-space: nowrap;
+}
+
+.CodeMirror, .CodeMirror-scroll {
+	  min-height: 0;
+}
+
+.CodeMirror {
+    display: table-cell;
+}
+
+#statusbar-container {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+#statusbar {
+    padding: 1em;
+    border-top: 1px solid lightgray;
+}
+
+.statusbar-option {
+    display: inline;
 }

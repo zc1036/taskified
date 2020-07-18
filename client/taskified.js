@@ -1,21 +1,104 @@
 
+function sanitizeHtml(text) {
+    var div = document.createElement('div')
+    div.innerText = text
+    return div.innerHTML.replace(/<br>/g, '\n')
+}
+
+function markdown(text) {
+    return marked(sanitizeHtml(text))
+}
+
+function formatDate(date) {
+    var today = new Date()
+
+    var td = new Date(
+        date.year,
+        date.month,
+        date.day,
+        date.hour,
+        date.minute
+    )
+
+    if (td.getFullYear() == today.getFullYear()) {
+        if (td.getMonth() == today.getMonth()
+            && td.getDate() == today.getDate())
+        {
+            var hour = date.hour % 12
+            var ampm = date.hour >= 12 ? 'pm' : 'am';
+
+            if (hour == 0) {
+                hour = '12'
+            }
+            return '' + hour + ':' + (date.minute.toString().padStart(2, '0')) + ' ' + ampm
+        } else if (td.getDate() == today.getDate() - 1) {
+            return 'yesterday'
+        } else if (td.getMonth() == today.getMonth() &&
+                   today.getDate() - td.getDate() < 7)
+        {
+            return td.toLocaleString('en-us', { weekday: 'long' })
+        } else {
+            return td.getMonth() + '/' + td.getMonth()
+        }
+    }
+    
+    return '' + (date.month + 1) + '/' + date.day + '/' + date.year
+}
+
+function setDate(todo, date) {
+    todo.date = {
+        minute: date.getMinutes(),
+        hour: date.getHours(),
+        day: date.getDate(),
+        month: date.getMonth(),
+        year: date.getFullYear()
+    }
+    todo.formattedDate = formatDate(todo.date)
+}
+
 function maketodo() {
-    return {
+    var date = new Date()
+
+    var todo = {
+        status: '',
         original: 'yark',
-        rendered: marked('yark'),
+        rendered: markdown('yark'),
         editable: false,
         selected: false,
         uid: Math.random().toString(36).substring(2, 15)
     }
+
+    setDate(todo, date)
+
+    return todo
+}
+
+function setTodoStatus(a) {
+    this.activeElement.status = a.text
 }
 
 var app = new Vue({
-    el: '#app',
+    el: '#app-container',
     data: {
-        todos: [
-            maketodo()
-        ],
+        todos: [ ],
         activeElement: null,
+        activeStatusShortcuts: [ ],
+        setTodoStateShortcuts: [
+            { shortcut: 'c',
+              text: '✓',
+              action: setTodoStatus },
+            { shortcut: 't',
+              text: '☐',
+              action: setTodoStatus },
+            { shortcut: 'T',
+              text: '☑',
+              action: setTodoStatus },
+            { shortcut: 'n',
+              text: '',
+              pretty: '[clear]',
+              action: setTodoStatus },
+        ],
+        activeContexts: [ ]
     },
     methods: {
         getTodoFromIdx(i) {
@@ -43,6 +126,7 @@ var app = new Vue({
                     return i;
                 }
             }
+            return 0;
         },
 
         handleItemClick(todo) {
@@ -53,45 +137,108 @@ var app = new Vue({
             this.activeElement = todo
         },
 
-        handleEditorKey(todo, event) {
+        handleEditorKey(todo, ed, event) {
             var ta = this.$refs['textareas_' + todo.uid][0]
 
             if (event.key == "Enter" && event.ctrlKey) {
-                todo.original = ta.value
-                todo.rendered = marked(ta.value)
+                todo.original = ed.value()
+                todo.rendered = markdown(todo.original)
+                ed.toTextArea()
                 todo.editable = false
-
-                Vue.nextTick(
-                    () => {
-                        var badge = this.$refs['badges_' + todo.uid][0]
-                    }
-                )
 
                 event.stopPropagation()
                 event.preventDefault()
             }
         },
 
-        handleGlobalKey(x) {
+        handleGlobalKey(event) {
+            this.activeContexts[this.activeContexts.length - 1](event)
+        },
+
+        cancelStatusCapture() {
+            this.activeStatusShortcuts = []
+            this.activeContexts.pop()
+        },
+
+        handleStatusKey(event) {
+            if (event.key == 'Escape'
+                || (event.key == 'g' && event.ctrlKey))
+            {
+                this.cancelStatusCapture()
+                return
+            }
+
+            selection = event.key
+
+            if (event.shiftKey) {
+                selection = selection.toUpperCase()
+            }
+
+            for (var i = 0; i < this.activeStatusShortcuts.length; ++i) {
+                var sc = this.activeStatusShortcuts[i]
+
+                if (sc.shortcut == event.key) {
+                    sc.action.call(this, sc)
+                    this.cancelStatusCapture()
+                    return
+                }
+            }
+        },
+
+        handleTodoKey(event) {
             if (this.activeElement && this.activeElement.editable) {
                 return
             }
 
             var todo = this.activeElement
 
-            switch (x.key) {
+            switch (event.key) {
+            case 's':
+                if (!this.activeElement) {
+                    break
+                }
+                this.activeContexts.push((e) => this.handleStatusKey(e))
+                this.activeStatusShortcuts = this.setTodoStateShortcuts
+                event.preventDefault()
+                event.stopPropagation()
+                break
+
             case 'Enter':
+                if (!todo) return;
                 todo.editable = true
-                x.preventDefault()
+                event.preventDefault()
+
                 Vue.nextTick(
                     () => {
                         var ta = this.$refs['textareas_' + this.activeElement.uid][0]
-                        ta.value = todo.original
-                        ta.focus()
+                        var ed = new SimpleMDE({ element: ta,
+                                                 shortcuts: { },
+                                                 initialValue: todo.original,
+                                                 autofocus: true,
+                                                 toolbar: false,
+                                                 spellChecker: false,
+                                                 status: false })
+                        ed.codemirror.on('keydown', (mirror, e) => {
+                            this.handleEditorKey(todo, ed, e)
+                        })
                     }
                 )
+
                 break
 
+            case 'g':
+                if (!event.ctrlKey) {
+                    break
+                }
+
+            case 'Escape':
+                if (this.activeElement) {
+                    this.activeElement.selected = false
+                    this.activeElement = null
+                }
+                break
+
+            case 'n':
             case 'ArrowDown':
                 var idx = this.getActiveIdx(todo)
                 var newtodo = this.getTodoFromIdx(idx + 1)
@@ -101,6 +248,7 @@ var app = new Vue({
                 }
                 break
 
+            case 'p':
             case 'ArrowUp':
                 var idx = this.getActiveIdx(todo)
                 var newtodo = this.getTodoFromIdx(idx - 1)
@@ -115,5 +263,10 @@ var app = new Vue({
                 break
             }
         }
+    },
+    mounted() {
+        console.log('yes')
+        window.addEventListener('keydown', (e) => this.handleGlobalKey(e))
+        this.activeContexts.push((e) => this.handleTodoKey(e))
     }
 })

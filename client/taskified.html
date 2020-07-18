@@ -3,30 +3,42 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta charset="UTF-8">
+        <link rel="stylesheet" href="simplemde.min.css">
         <link rel="stylesheet" href="taskified.css">
         <script src="vue.js"></script>
         <script src="marked.min.js"></script>
+        <script src="simplemde.min.js"></script>
         <title>Taskified</title>
     </head>
     <body>
-        <div id="app"
-             tabindex="-1"
-             @keydown="handleGlobalKey">
-            <div
-                class="taskitem"
-                v-for="todo in todos"
-                v-bind:class="{ active: todo.selected }"
-                :ref="'badges_' + todo.uid"
-                @mousedown="handleItemClick(todo)">
-                <div v-html="todo.rendered"
-                     v-if="!todo.editable"
-                     class="todo-render">
+        <div id="app-container">
+            <div id="app">
+                <div
+                    class="taskitem"
+                    v-for="todo in todos"
+                    v-bind:class="{ active: todo.selected }"
+                    :ref="'badges_' + todo.uid"
+                    @mousedown="handleItemClick(todo)">
+                    <div class="todo-state"><p>{{todo.status}}</p></div>
+                    <div v-html="todo.rendered"
+                         v-if="!todo.editable"
+                         class="todo-render">
+                    </div>
+                    <textarea :ref="'textareas_' + todo.uid"
+                              v-if="todo.editable"
+                              class="todo-editor">
+                    </textarea>
+                    <div class="todo-date">
+                        {{todo.formattedDate}}
+                    </div>
                 </div>
-                <textarea :ref="'textareas_' + todo.uid"
-                          @keydown="function(event) { return handleEditorKey(todo, event) }"
-                          v-if="todo.editable"
-                          class="todo-editor">
-                </textarea>
+            </div>
+            <div id="statusbar-container">
+                <div v-if="activeStatusShortcuts.length > 0" id="statusbar">
+                    <div class="statusbar-option" v-for="option in activeStatusShortcuts">
+                        {{option.shortcut}}: {{option.pretty || option.text}}
+                    </div>
+                </div>
             </div>
         </div>
         <script src="taskified.js"></script>
