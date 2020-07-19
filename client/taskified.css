@@ -31,9 +31,15 @@ html {
 }
 
 .header-container > div {
+    font-weight: bold;
     padding: 3rem .5rem 1.5rem .5rem;
-    border-left: 3px solid rgba(0, 0, 0, 0);
+    position: relative;
+    left: 3px;
     font-size: 4rem;
+}
+
+.header-container > div {
+    border-bottom: 1px solid lightgray;
 }
 
 .todo-render > p:first-child {
@@ -62,7 +68,7 @@ html {
 }
 
 .todo-state {
-    padding: .7rem .5rem 0 0;
+    padding: .7rem .5rem 0 .5rem;
     text-align: right;
 }
 
@@ -84,6 +90,7 @@ html {
     color: gray;
     white-space: nowrap;
     font-size: .6em;
+    padding-right: .2rem;
 }
 
 .CodeMirror, .CodeMirror-scroll {
