@@ -30,7 +30,7 @@ function formatDate(date) {
 
     if (td.getFullYear() == today.getFullYear()) {
         if (td.getMonth() == today.getMonth()
-            && td.getDate() == today.getDate())
+            && (today.getDate() - td.getDate() < 7))
         {
             var hour = date.hour % 12
             var ampm = date.hour >= 12 ? 'pm' : 'am';
@@ -38,9 +38,13 @@ function formatDate(date) {
             if (hour == 0) {
                 hour = '12'
             }
-            return '' + hour + ':' + (date.minute.toString().padStart(2, '0')) + ' ' + ampm
-        } else if (td.getDate() == today.getDate() - 1) {
-            return 'yesterday'
+            var prefix = ''
+            if (td.getDate() == today.getDate() - 1) {
+                prefix = 'y. '
+            } else if (today.getDate() - td.getDate() < 7) {
+                prefix = td.toLocaleString('en-us', { weekday: 'long' }) + ', '
+            }
+            return prefix + hour + ':' + (date.minute.toString().padStart(2, '0')) + ' ' + ampm
         } else if (td.getMonth() == today.getMonth() &&
                    today.getDate() - td.getDate() < 7)
         {
@@ -65,12 +69,10 @@ function makeJsonFromDate(date) {
 
 function setModDate(todo, date) {
     todo.modDate = makeJsonFromDate(date)
-    todo.formattedModDate = formatDate(todo.modDate)
 }
 
 function setCreateDate(todo, date) {
     todo.createDate = makeJsonFromDate(date)
-    todo.formattedCreateDate = formatDate(todo.createDate)
 }
 
 function maketodo() {
@@ -163,6 +165,10 @@ var app = new Vue({
         activeContexts: [ ],
     },
     methods: {
+        formatDate(d) {
+            return formatDate(d)
+        },
+
         getSelectedTodos() {
             return this.todos.filter(todo => todo.selected)
         },
@@ -433,7 +439,6 @@ var app = new Vue({
         }
     },
     mounted() {
-        console.log('yes')
         window.addEventListener('keydown', (e) => this.handleGlobalKey(e))
         this.activeContexts.push((e) => this.handleTodoKey(e))
         this.loadStateFromLocalStorage()

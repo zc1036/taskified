@@ -8,11 +8,11 @@
     display: table-row;
 }
 
-.todo-render, .todo-editor-container {
+.todo-content-container {
     width: 8in;
 }
 
-.todo-state, .todo-render, .todo-editor-container, todo-date {
+.todo-state, .todo-content-container, todo-date {
     display: table-cell;
     vertical-align: top;
 }
@@ -30,12 +30,12 @@ html {
     padding: 0;
 }
 
-.todo-render, .todo-state, .todo-date {
+.todo-content-container, .todo-state, .todo-date {
     padding: .2rem 1rem .2rem .5rem;
     margin: 1rem 0 1rem 0;
 }
 
-.todo-render {
+.todo-content-container {
     border-left: 3px solid white;
 }
 
@@ -44,7 +44,7 @@ html {
     text-align: right;
 }
 
-.active > .todo-render {
+.active > .todo-content-container {
     border-left: 3px solid blue;
 }
 
