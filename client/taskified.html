@@ -3,12 +3,12 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta charset="UTF-8">
-        <link rel="stylesheet" href="simplemde.min.css">
-        <link rel="stylesheet" href="taskified.css">
-        <script src="vue.js"></script>
-        <script src="FileSaver.js"></script>
-        <script src="marked.min.js"></script>
-        <script src="simplemde.min.js"></script>
+        <link rel="stylesheet" href="/simplemde.min.css">
+        <link rel="stylesheet" href="/taskified.css">
+        <script src="/vue.js"></script>
+        <script src="/FileSaver.js"></script>
+        <script src="/marked.min.js"></script>
+        <script src="/simplemde.min.js"></script>
         <title>Taskified</title>
     </head>
     <body>
@@ -28,7 +28,7 @@
                 <div
                     class="taskitem"
                     v-for="todo in state.todos"
-                    v-bind:class="{ active: todo.selected }"
+                    v-bind:class="{ active: selectedTodos[todo.uid] }"
                     :ref="'badges_' + todo.uid"
                     @mousedown="e => (handleItemClick(todo, e.ctrlKey), e.stopPropagation())">
                     <div class="todo-state">{{todo.status}}</div>
@@ -59,6 +59,6 @@
                 </div>
             </div>
         </div>
-        <script src="taskified.js"></script>
+        <script src="/taskified.js"></script>
     </body>
 </html>

@@ -85,7 +85,6 @@ function maketodo() {
         original: '*Markdown yo*',
         rendered: '',
         editable: false,
-        selected: false,
         modified: false,
         uid: Math.random().toString(36).substring(2, 15)
     }
@@ -143,10 +142,11 @@ var app = new Vue({
     el: '#app-container',
     data: {
         state: {
-            documentTitle: '',
-            todos: [ ],
+            documentTitle: 'New document',
+            todos: [ maketodo() ],
             deletedTodos: [ ],
         },
+        selectedTodos: {},
         activeStatusShortcuts: [ ],
         setTodoStateShortcuts: [
             { shortcut: 'c',
@@ -170,6 +170,7 @@ var app = new Vue({
               action: setTodoStatus }
         ],
         activeContexts: [ ],
+        changed: false
     },
     methods: {
         swapTodos(idx1, idx2) {
@@ -225,19 +226,20 @@ var app = new Vue({
         },
 
         getSelectedTodos() {
-            return this.state.todos.filter(todo => todo.selected)
+            return this.state.todos.filter(todo => this.selectedTodos[todo.uid])
         },
 
         saveState() {
             var savestring = JSON.stringify(this.state)
-            window.localStorage.setItem('savestate', savestring)
+            window.localStorage.setItem(window.location.pathname + '_savestate', savestring)
 
             var blob = new Blob([savestring], {type: "text/plain;charset=utf-8"})
             saveAs(blob, this.state.documentTitle + ".json")
+            this.changed = false
         },
 
         loadStateFromLocalStorage() {
-            var state = window.localStorage.getItem('savestate')
+            var state = window.localStorage.getItem(window.location.pathname + '_savestate')
 
             if (state) {
                 this.state = JSON.parse(state)
@@ -248,6 +250,10 @@ var app = new Vue({
 
         postLoadState() {
             this.clearSelection()
+            Vue.nextTick(() => {
+                this.changed = false
+                console.log('clearning change')
+            })
         },
 
         getTodoFromIdx(i) {
@@ -272,14 +278,14 @@ var app = new Vue({
         getTodoIdx(todo) {
             for (var i = 0; i < this.state.todos.length; ++i) {
                 if (this.state.todos[i] == todo) {
-                    return i;
+                    return i
                 }
             }
-            return 0;
+            return 0
         },
 
         deleteTodo(todo) {
-            todo.selected = false
+            Vue.set(this.selectedTodos, todo.uid, false)
             todo.editable = false
             var idx = this.getTodoIdx(todo)
 
@@ -287,7 +293,7 @@ var app = new Vue({
         },
 
         clearSelection() {
-            this.state.todos.forEach((todo) => todo.selected = false)
+            this.state.todos.forEach((todo) => Vue.set(this.selectedTodos, todo.uid, false))
         },
 
         handleItemClick(todo, multiSelect) {
@@ -295,7 +301,7 @@ var app = new Vue({
                 this.clearSelection()
             }
 
-            todo.selected = !todo.selected
+            Vue.set(this.selectedTodos, todo.uid, !this.selectedTodos[todo.uid])
 
             Vue.nextTick(() =>
                          this.$refs['badges_' + todo.uid][0].scrollIntoView({block: 'nearest'}))
@@ -412,7 +418,7 @@ var app = new Vue({
                 // fallthrough
 
             case 'Escape':
-                this.getSelectedTodos().forEach(todo => todo.selected = false)
+                this.clearSelection()
                 break
 
             case 'i':
@@ -518,12 +524,25 @@ var app = new Vue({
     watch: {
         'state.documentTitle': function(newTitle, oldTitle) {
             document.title = newTitle + ' // Taskified'
+        },
+
+        state: {
+            deep: true,
+            handler: function(a, b) {
+                this.changed = true
+            }
         }
     },
-    
+
     mounted() {
         window.addEventListener('keydown', (e) => this.handleGlobalKey(e))
         this.activeContexts.push((e) => this.handleTodoKey(e))
         this.loadStateFromLocalStorage()
     }
 })
+
+window.addEventListener("beforeunload", function(event) {
+    if (app.changed) {
+        event.returnValue = "You haven't saved changes yet. Continue?"
+    }
+});
