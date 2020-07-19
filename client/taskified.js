@@ -82,13 +82,15 @@ function maketodo() {
 
     var todo = {
         status: '',
-        original: 'yark',
-        rendered: markdown('yark'),
+        original: '*Markdown yo*',
+        rendered: '',
         editable: false,
         selected: false,
         modified: false,
         uid: Math.random().toString(36).substring(2, 15)
     }
+
+    todo.rendered = markdown(todo.original)
 
     setCreateDate(todo, date)
     setModDate(todo, date)
@@ -170,6 +172,45 @@ var app = new Vue({
         activeContexts: [ ],
     },
     methods: {
+        swapTodos(idx1, idx2) {
+            var old = this.state.todos[idx1]
+            this.state.todos.splice(idx1, 1, this.state.todos[idx2])
+            this.state.todos.splice(idx2, 1, old)
+        },
+
+        moveTodosUp(selected) {
+            // Do not shift a group that has nowhere to go (up or down)
+            if (selected.length > 0) {
+                if (this.getTodoIdx(selected[0]) == 0)
+                {
+                    return
+                }
+            }
+
+            selected.forEach((todo) => {
+                var idx = this.getTodoIdx(todo)
+
+                this.swapTodos(idx - 1, idx)
+            })
+        },
+
+        moveTodosDown(selected) {
+            // Do not shift a group that has nowhere to go (up or down)
+            if (selected.length > 0) {
+                if ((this.getTodoIdx(selected[selected.length - 1])
+                     == this.state.todos.length - 1))
+                {
+                    return
+                }
+            }
+
+            selected.slice().reverse().forEach((todo) => {
+                var idx = this.getTodoIdx(todo)
+
+                this.swapTodos(idx + 1, idx)
+            })
+        },
+
         startUpdatingDocTitle() {
             this.activeContexts.push((e) => e.stopPropagation())
         },
@@ -249,12 +290,12 @@ var app = new Vue({
             this.state.todos.forEach((todo) => todo.selected = false)
         },
 
-        handleItemClick(todo, shiftKey) {
-            if (!shiftKey) {
+        handleItemClick(todo, multiSelect) {
+            if (!multiSelect) {
                 this.clearSelection()
             }
 
-            todo.selected = true
+            todo.selected = !todo.selected
 
             Vue.nextTick(() =>
                          this.$refs['badges_' + todo.uid][0].scrollIntoView({block: 'nearest'}))
@@ -374,30 +415,54 @@ var app = new Vue({
                 this.getSelectedTodos().forEach(todo => todo.selected = false)
                 break
 
+            case 'i':
+            case 'I':
+                var selected = this.getSelectedTodos()
+                var insertPos = event.shiftKey ? 0 : this.state.todos.length
+                if (selected.length > 0) {
+                    insertPos = this.getTodoIdx(event.shiftKey
+                                                ? selected[0]
+                                                : selected[selected.length - 1])
+                    insertPos += event.shiftKey ? 0 : 1
+                }
+                var todo = maketodo()
+                this.state.todos.splice(insertPos, 0, todo)
+                this.handleItemClick(todo, false)
+                
+                break
+
             case 'n':
             case 'N':
-            case 'ArrowDown':
                 if (this.state.todos.length > 0) {
                     var selected = this.getSelectedTodos()
-                    var idx = this.getTodoIdx(selected[selected.length - 1])
-                    var newtodo = this.getTodoFromIdx(idx + 1)
 
-                    if (newtodo) {
-                        this.handleItemClick(newtodo, event.shiftKey)
+                    if (event.ctrlKey) {
+                        this.moveTodosDown(selected)
+                    } else {
+                        var idx = this.getTodoIdx(selected[selected.length - 1])
+                        var newtodo = this.getTodoFromIdx(idx + 1)
+
+                        if (newtodo) {
+                            this.handleItemClick(newtodo, event.shiftKey)
+                        }
                     }
                 }
                 break
 
             case 'P':
             case 'p':
-            case 'ArrowUp':
                 if (this.state.todos.length > 0) {
                     var selected = this.getSelectedTodos()
-                    var idx = this.getTodoIdx(selected[0])
-                    var newtodo = this.getTodoFromIdx(idx - 1)
 
-                    if (newtodo) {
-                        this.handleItemClick(newtodo, event.shiftKey)
+                    if (event.ctrlKey) {
+                        this.moveTodosUp(selected)
+                    } else {
+                        var idx = this.getTodoIdx(selected[0])
+                        var newtodo = this.getTodoFromIdx(idx - 1)
+
+                        if (newtodo) {
+                            this.handleItemClick(newtodo, event.shiftKey)
+                        }
                     }
                 }
                 break
