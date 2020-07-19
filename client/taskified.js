@@ -212,13 +212,20 @@ var app = new Vue({
             })
         },
 
+        makeDocTitleEditable() {
+            this.$refs.docTitle.contentEditable = true
+        },
+
         startUpdatingDocTitle() {
             this.activeContexts.push((e) => e.stopPropagation())
         },
 
         updateDocumentTitle(t) {
             this.activeContexts.pop()
-            this.state.documentTitle = this.$refs.docTitle.innerText
+            if (this.state.documentTitle.trim() != this.$refs.docTitle.innerText.trim()) {
+                this.state.documentTitle = this.$refs.docTitle.innerText.trim()
+            }
+            this.$refs.docTitle.contentEditable = false
         },
 
         formatDate(d) {

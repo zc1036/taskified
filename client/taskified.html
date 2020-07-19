@@ -17,8 +17,8 @@
                 <div class="header-container">
                     <div></div>
                     <div :ref="'docTitle'"
-                         contentEditable="true"
                          spellcheck="false"
+                         @mousedown="makeDocTitleEditable"
                          @focus="startUpdatingDocTitle"
                          @blur="updateDocumentTitle">
                         {{state.documentTitle}}
