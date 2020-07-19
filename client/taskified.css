@@ -4,7 +4,7 @@
     display: table;
 }
 
-.taskitem {
+.taskitem, .header-container {
     display: table-row;
 }
 
@@ -12,9 +12,13 @@
     width: 8in;
 }
 
-.todo-state, .todo-content-container, todo-date {
+.todo-state, .todo-content-container, .todo-date, .header-container > div {
     display: table-cell;
     vertical-align: top;
+}
+
+.todo-date {
+    vertical-align: middle;
 }
 
 html, body {
@@ -26,21 +30,39 @@ html {
     font-family: open sans, helvetica neue, Helvetica, Arial, sans-serif
 }
 
-.taskitem p {
-    padding: 0;
+.header-container > div {
+    padding: 3rem .5rem 1.5rem .5rem;
+    border-left: 3px solid rgba(0, 0, 0, 0);
+    font-size: 4rem;
 }
 
-.todo-content-container, .todo-state, .todo-date {
-    padding: .2rem 1rem .2rem .5rem;
-    margin: 1rem 0 1rem 0;
+.todo-render > p:first-child {
+    padding-top: .5rem;
+    margin-top: 0;
+}
+
+.todo-render > :last-child {
+    padding-bottom: .5rem;
+    margin-bottom: 0;
+}
+
+.todo-render > * {
+    padding-top: .2rem;
+    padding-bottom: .2rem;
+    margin: 0;
 }
 
 .todo-content-container {
-    border-left: 3px solid white;
+    padding: .2rem 1rem .2rem .5rem;
+    #//margin: 1rem 0 1rem 0;
+}
+
+.todo-content-container {
+    border-left: 3px solid rgba(0, 0, 0, 0);
 }
 
 .todo-state {
-    padding: .2rem .5rem .2rem 1rem;
+    padding: .7rem .5rem 0 0;
     text-align: right;
 }
 

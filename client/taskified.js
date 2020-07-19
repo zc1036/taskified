@@ -28,9 +28,10 @@ function formatDate(date) {
         date.minute
     )
 
+    var datediff = today.getDate() - td.getDate()
     if (td.getFullYear() == today.getFullYear()) {
         if (td.getMonth() == today.getMonth()
-            && (today.getDate() - td.getDate() < 7))
+            && (datediff < 7))
         {
             var hour = date.hour % 12
             var ampm = date.hour >= 12 ? 'pm' : 'am';
@@ -38,13 +39,14 @@ function formatDate(date) {
             if (hour == 0) {
                 hour = '12'
             }
+            var suffix = ''
             var prefix = ''
-            if (td.getDate() == today.getDate() - 1) {
-                prefix = 'y. '
-            } else if (today.getDate() - td.getDate() < 7) {
+            if (datediff == 1) {
+                suffix = ' yest.'
+            } else if (datediff > 0 && datediff < 7) {
                 prefix = td.toLocaleString('en-us', { weekday: 'long' }) + ', '
             }
-            return prefix + hour + ':' + (date.minute.toString().padStart(2, '0')) + ' ' + ampm
+            return prefix + hour + ':' + (date.minute.toString().padStart(2, '0')) + ' ' + ampm + suffix
         } else if (td.getMonth() == today.getMonth() &&
                    today.getDate() - td.getDate() < 7)
         {
@@ -138,8 +140,11 @@ Vue.component('simplemde', {
 var app = new Vue({
     el: '#app-container',
     data: {
-        todos: [ ],
-        deletedTodos: [ ],
+        state: {
+            documentTitle: '',
+            todos: [ ],
+            deletedTodos: [ ],
+        },
         activeStatusShortcuts: [ ],
         setTodoStateShortcuts: [
             { shortcut: 'c',
@@ -165,30 +170,36 @@ var app = new Vue({
         activeContexts: [ ],
     },
     methods: {
+        startUpdatingDocTitle() {
+            this.activeContexts.push((e) => e.stopPropagation())
+        },
+
+        updateDocumentTitle(t) {
+            this.activeContexts.pop()
+            this.state.documentTitle = this.$refs.docTitle.innerText
+        },
+
         formatDate(d) {
             return formatDate(d)
         },
 
         getSelectedTodos() {
-            return this.todos.filter(todo => todo.selected)
+            return this.state.todos.filter(todo => todo.selected)
         },
 
         saveState() {
-            window.localStorage.setItem('todos', JSON.stringify(this.todos))
-            window.localStorage.setItem('deletedtodos', JSON.stringify(this.deletedTodos))
+            var savestring = JSON.stringify(this.state)
+            window.localStorage.setItem('savestate', savestring)
+
+            var blob = new Blob([savestring], {type: "text/plain;charset=utf-8"})
+            saveAs(blob, this.state.documentTitle + ".json")
         },
 
         loadStateFromLocalStorage() {
-            var todos = window.localStorage.getItem('todos')
+            var state = window.localStorage.getItem('savestate')
 
-            if (todos) {
-                this.todos = JSON.parse(todos)
-            }
-
-            var deletedTodos = window.localStorage.getItem('deletedtodos')
-
-            if (deletedTodos) {
-                this.deletedTodos = JSON.parse(deletedTodos)
+            if (state) {
+                this.state = JSON.parse(state)
             }
 
             this.postLoadState()
@@ -201,25 +212,25 @@ var app = new Vue({
         getTodoFromIdx(i) {
             var last = null
             var first = null
-            if (this.todos.length > 0) {
-                first = this.todos[0]
-                last = this.todos[this.todos.length - 1]
+            if (this.state.todos.length > 0) {
+                first = this.state.todos[0]
+                last = this.state.todos[this.state.todos.length - 1]
             }
 
             if (i < 0) {
                 return first
             }
 
-            if (i >= this.todos.length) {
+            if (i >= this.state.todos.length) {
                 return last
             }
 
-            return this.todos[i]
+            return this.state.todos[i]
         },
 
         getTodoIdx(todo) {
-            for (var i = 0; i < this.todos.length; ++i) {
-                if (this.todos[i] == todo) {
+            for (var i = 0; i < this.state.todos.length; ++i) {
+                if (this.state.todos[i] == todo) {
                     return i;
                 }
             }
@@ -231,11 +242,11 @@ var app = new Vue({
             todo.editable = false
             var idx = this.getTodoIdx(todo)
 
-            this.todos.splice(idx, 1)
+            this.state.todos.splice(idx, 1)
         },
 
         clearSelection() {
-            this.todos.forEach((todo) => todo.selected = false)
+            this.state.todos.forEach((todo) => todo.selected = false)
         },
 
         handleItemClick(todo, shiftKey) {
@@ -341,19 +352,19 @@ var app = new Vue({
                 break
 
             case 'G':
-                var lasttodo = this.getTodoFromIdx(this.todos.length)
-                if (lasttodo) {
-                    this.handleItemClick(lasttodo)
+                var firsttodo = this.getTodoFromIdx(0)
+                if (firsttodo) {
+                    this.handleItemClick(firsttodo)
                 }
                 
                 break
 
             case 'g':
                 if (!event.ctrlKey) {
-                    var firsttodo = this.getTodoFromIdx(0)
+                    var lasttodo = this.getTodoFromIdx(this.state.todos.length)
 
-                    if (firsttodo) {
-                        this.handleItemClick(firsttodo)
+                    if (lasttodo) {
+                        this.handleItemClick(lasttodo)
                     }
                     break
                 }
@@ -366,7 +377,7 @@ var app = new Vue({
             case 'n':
             case 'N':
             case 'ArrowDown':
-                if (this.todos.length > 0) {
+                if (this.state.todos.length > 0) {
                     var selected = this.getSelectedTodos()
                     var idx = this.getTodoIdx(selected[selected.length - 1])
                     var newtodo = this.getTodoFromIdx(idx + 1)
@@ -380,7 +391,7 @@ var app = new Vue({
             case 'P':
             case 'p':
             case 'ArrowUp':
-                if (this.todos.length > 0) {
+                if (this.state.todos.length > 0) {
                     var selected = this.getSelectedTodos()
                     var idx = this.getTodoIdx(selected[0])
                     var newtodo = this.getTodoFromIdx(idx - 1)
@@ -406,7 +417,7 @@ var app = new Vue({
                         }
                     )
 
-                    this.deletedTodos.push(deleted)
+                    this.state.deletedTodos.push(deleted)
 
                     var newtodo = this.getTodoFromIdx(lastidx)
 
@@ -418,14 +429,14 @@ var app = new Vue({
                 break
 
             case 'u':
-                var pkg = this.deletedTodos.pop()
+                var pkg = this.state.deletedTodos.pop()
 
                 if (pkg) {
                     this.clearSelection()
 
                     pkg.forEach(
                         (old, idx) => {
-                            this.todos.splice(old.idx + idx, 0, old.todo)
+                            this.state.todos.splice(old.idx + idx, 0, old.todo)
                             this.handleItemClick(old.todo, true)
                         }
                     )
@@ -433,11 +444,18 @@ var app = new Vue({
                 break
 
             case 'x':
-                this.todos.push(maketodo())
+                this.state.todos.push(maketodo())
                 break
             }
         }
     },
+
+    watch: {
+        'state.documentTitle': function(newTitle, oldTitle) {
+            document.title = newTitle + ' // Taskified'
+        }
+    },
+    
     mounted() {
         window.addEventListener('keydown', (e) => this.handleGlobalKey(e))
         this.activeContexts.push((e) => this.handleTodoKey(e))
