@@ -55,7 +55,7 @@ function formatDate(date) {
             return td.getMonth() + '/' + td.getMonth()
         }
     }
-    
+
     return '' + (date.month + 1) + '/' + date.day + '/' + date.year
 }
 
@@ -149,6 +149,10 @@ var app = new Vue({
         selectedTodos: {},
         activeStatusShortcuts: [ ],
         setTodoStateShortcuts: [
+            { shortcut: 's',
+              text: '',
+              pretty: '[clear]',
+              action: setTodoStatus },
             { shortcut: 'c',
               text: '✓',
               action: setTodoStatus },
@@ -158,15 +162,17 @@ var app = new Vue({
             { shortcut: 'T',
               text: '☑',
               action: setTodoStatus },
-            { shortcut: 'n',
-              text: '',
-              pretty: '[clear]',
-              action: setTodoStatus },
             { shortcut: 'f',
-              text: '⮕',
+              text: '➡',
               action: setTodoStatus },
             { shortcut: 'b',
               text: '⇨',
+              action: setTodoStatus },
+            { shortcut: 'i',
+              text: 'ⓘ',
+              action: setTodoStatus },
+            { shortcut: 'w',
+              text: '⚠',
               action: setTodoStatus }
         ],
         activeContexts: [ ],
@@ -259,7 +265,6 @@ var app = new Vue({
             this.clearSelection()
             Vue.nextTick(() => {
                 this.changed = false
-                console.log('clearning change')
             })
         },
 
@@ -345,6 +350,8 @@ var app = new Vue({
         },
 
         handleStatusKey(event) {
+            event.preventDefault()
+
             if (event.key == 'Escape'
                 || (event.key == 'g' && event.ctrlKey))
             {
@@ -374,6 +381,7 @@ var app = new Vue({
             case 's':
                 if (event.ctrlKey) {
                     this.saveState()
+                    event.preventDefault()
                     break
                 }
 
@@ -410,7 +418,7 @@ var app = new Vue({
                 if (firsttodo) {
                     this.handleItemClick(firsttodo)
                 }
-                
+
                 break
 
             case 'g':
@@ -441,7 +449,7 @@ var app = new Vue({
                 var todo = maketodo()
                 this.state.todos.splice(insertPos, 0, todo)
                 this.handleItemClick(todo, false)
-                
+
                 break
 
             case 'n':
@@ -464,6 +472,9 @@ var app = new Vue({
 
             case 'P':
             case 'p':
+                if (event.ctrlKey) {
+                    event.preventDefault()
+                }
                 if (this.state.todos.length > 0) {
                     var selected = this.getSelectedTodos()
 
@@ -486,7 +497,7 @@ var app = new Vue({
                 if (selected.length) {
                     var lasttodo = selected[selected.length - 1]
                     var lastidx = this.getTodoIdx(lasttodo)
-                    
+
                     var deleted = selected.map(
                         todo => {
                             var idx = this.getTodoIdx(todo)

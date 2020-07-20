@@ -17,13 +17,18 @@
     vertical-align: top;
 }
 
-.todo-date {
-    padding-top: .7rem;
-}
-
 html, body {
     padding: 0;
     margin: 0;
+}
+
+body {
+    margin-bottom: 1in;
+}
+
+.todo-render h1 {
+    padding-top: 1em;
+    border-bottom: 1px solid lightgray;
 }
 
 html {
@@ -34,7 +39,7 @@ html {
     font-weight: bold;
     padding: 3rem .5rem 1.5rem .5rem;
     position: relative;
-    left: 3px;
+    left: 5px;
     font-size: 4rem;
 }
 
@@ -42,13 +47,17 @@ html {
     border-bottom: 1px solid lightgray;
 }
 
+.taskitem:hover {
+    background-color: #fafafafa;
+}
+
 .todo-render > p:first-child {
-    padding-top: .5rem;
+    padding-top: .3rem;
     margin-top: 0;
 }
 
 .todo-render > :last-child {
-    padding-bottom: .5rem;
+    padding-bottom: .3rem;
     margin-bottom: 0;
 }
 
@@ -58,22 +67,26 @@ html {
     margin: 0;
 }
 
+.todo-render ul {
+    padding-left: 1.5em;
+}
+
 .todo-content-container {
     padding: .2rem 1rem .2rem .5rem;
     #//margin: 1rem 0 1rem 0;
 }
 
 .todo-content-container {
-    border-left: 3px solid rgba(0, 0, 0, 0);
+    border-left: 5px solid rgba(0, 0, 0, 0);
 }
 
 .todo-state {
-    padding: .7rem .5rem 0 .5rem;
+    padding: .4rem .5rem 0 .5rem;
     text-align: right;
 }
 
 .active > .todo-content-container {
-    border-left: 3px solid blue;
+    border-left: 5px solid #42A5F5;
 }
 
 .todo-editor {
@@ -89,6 +102,7 @@ html {
 .todo-date {
     color: gray;
     white-space: nowrap;
+    vertical-align: middle;
     font-size: .6em;
     padding-right: .2rem;
 }
@@ -98,7 +112,8 @@ html {
 }
 
 #statusbar-container {
-    position: absolute;
+    position: fixed;
+    background-color: white;
     bottom: 0;
     width: 100%;
 }
