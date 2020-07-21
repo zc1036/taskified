@@ -35,6 +35,13 @@ html {
     font-family: open sans, helvetica neue, Helvetica, Arial, sans-serif
 }
 
+#savestatus {
+    position: fixed;
+    right: 1em;
+    top: 1em;
+    color: lightgray;
+}
+
 .header-container > div {
     font-weight: bold;
     padding: 3rem .5rem 1.5rem .5rem;
@@ -49,6 +56,13 @@ html {
 
 .taskitem:hover {
     background-color: #fafafafa;
+}
+
+.changesUnsaved:before {
+    content: "*";
+    position: absolute;
+    transform: translateX(-100%);
+    color: gray;
 }
 
 .todo-render > p:first-child {

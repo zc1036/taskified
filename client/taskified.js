@@ -77,6 +77,10 @@ function setCreateDate(todo, date) {
     todo.createDate = makeJsonFromDate(date)
 }
 
+function rendertodo(todo) {
+    todo.rendered = markdown(todo.original)
+}
+
 function maketodo() {
     var date = new Date()
 
@@ -84,12 +88,11 @@ function maketodo() {
         status: '',
         original: '*Markdown yo*',
         rendered: '',
-        editable: false,
         modified: false,
         uid: Math.random().toString(36).substring(2, 15)
     }
 
-    todo.rendered = markdown(todo.original)
+    rendertodo(todo)
 
     setCreateDate(todo, date)
     setModDate(todo, date)
@@ -145,8 +148,10 @@ var app = new Vue({
             documentTitle: 'New document',
             todos: [ maketodo() ],
             deletedTodos: [ ],
+            lastSaveDate: null
         },
         selectedTodos: {},
+        editableTodos: {},
         activeStatusShortcuts: [ ],
         setTodoStateShortcuts: [
             { shortcut: 's',
@@ -176,9 +181,20 @@ var app = new Vue({
               action: setTodoStatus }
         ],
         activeContexts: [ ],
-        changed: false
+        changed: false,
+        saving: false
     },
     methods: {
+        savetext() {
+            if (this.saving) {
+                return 'saving...'
+            } else if (this.state.lastSaveDate) {
+                return formatDate(this.state.lastSaveDate)
+            } else {
+                return 'unsaved'
+            }
+        },
+
         swapTodos(idx1, idx2) {
             var old = this.state.todos[idx1]
             this.state.todos.splice(idx1, 1, this.state.todos[idx2])
@@ -243,12 +259,40 @@ var app = new Vue({
         },
 
         saveState() {
+            if (this.saving) {
+                alert('already saving')
+                return
+            }
+
+            this.state.todos.filter(todo => this.editableTodos[todo.uid]).forEach(rendertodo)
+
+            var oldLastSaveDate = this.state.lastSaveDate
+
+            this.saving = true
+            this.state.lastSaveDate = makeJsonFromDate(new Date())
+
+						axios.post(window.location.pathname + '?save',
+                       {
+                           state: this.state
+                       }).then(() => {
+                                   this.saving = false
+                                   this.changed = false
+                               },
+                               e => {
+                                   this.state.lastSaveDate = oldLastSaveDate
+                                   this.saving = false
+                                   alert('Error saving; see console')
+                                   console.log(e)
+                                   console.log({e})
+                               })
+
             var savestring = JSON.stringify(this.state)
             window.localStorage.setItem(window.location.pathname + '_savestate', savestring)
 
+            /*
             var blob = new Blob([savestring], {type: "text/plain;charset=utf-8"})
             saveAs(blob, this.state.documentTitle + ".json")
-            this.changed = false
+            */
         },
 
         loadStateFromLocalStorage() {
@@ -256,6 +300,14 @@ var app = new Vue({
 
             if (state) {
                 this.state = JSON.parse(state)
+            }
+
+            this.postLoadState()
+        },
+
+        loadStateFromJson(json) {
+            if (json.length > 0) {
+                this.state = JSON.parse(json).state
             }
 
             this.postLoadState()
@@ -298,7 +350,8 @@ var app = new Vue({
 
         deleteTodo(todo) {
             Vue.set(this.selectedTodos, todo.uid, false)
-            todo.editable = false
+            Vue.set(this.editableTodos, todo.uid, false)
+
             var idx = this.getTodoIdx(todo)
 
             this.state.todos.splice(idx, 1)
@@ -326,9 +379,10 @@ var app = new Vue({
                 || event.key == "Enter" && event.ctrlKey)
             {
                 //todo.original = ed.value()
-                todo.rendered = markdown(todo.original)
+                rendertodo(todo)
                 ed.toTextArea()
-                todo.editable = false
+
+                Vue.set(this.editableTodos, todo.uid, false)
 
                 event.stopPropagation()
                 event.preventDefault()
@@ -392,8 +446,8 @@ var app = new Vue({
                 break
 
             case 'Enter':
-                var todos = this.getSelectedTodos().filter(todo => !todo.editable)
-                todos.forEach(todo => todo.editable = true)
+                var todos = this.getSelectedTodos().filter(todo => !this.editableTodos[todo.uid])
+                todos.forEach(todo => Vue.set(this.editableTodos, todo.uid,  true))
                 event.preventDefault()
 
                 Vue.nextTick(
@@ -555,12 +609,14 @@ var app = new Vue({
     mounted() {
         window.addEventListener('keydown', (e) => this.handleGlobalKey(e))
         this.activeContexts.push((e) => this.handleTodoKey(e))
-        this.loadStateFromLocalStorage()
+        this.loadStateFromJson(initialSavedFile__)
     }
 })
 
 window.addEventListener("beforeunload", function(event) {
-    if (app.changed) {
+    if (app.saving) {
+        event.returnValue = "You're in the middle of saving chagnes. Continue?"
+    } else if (app.changed) {
         event.returnValue = "You haven't saved changes yet. Continue?"
     }
 });

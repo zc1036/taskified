@@ -9,15 +9,26 @@
         <script src="/FileSaver.js"></script>
         <script src="/marked.min.js"></script>
         <script src="/simplemde.min.js"></script>
+        <script src="/axios.js"></script>
         <title>Taskified</title>
+
+        <!-- This will be replaced by the server when this file is
+             served -->
+        <script>
+            var initialSavedFile__ = '';
+        </script>
     </head>
     <body>
         <div id="app-container">
             <div id="app">
+                <div id="savestatus">
+                    <span v-if="changed">*</span>{{savetext()}}
+                </div>
                 <div class="header-container">
                     <div></div>
                     <div :ref="'docTitle'"
                          spellcheck="false"
+                         v-bind:class="{ changesUnsaved: changed }"
                          @mousedown="makeDocTitleEditable"
                          @focus="startUpdatingDocTitle"
                          @blur="updateDocumentTitle">
@@ -34,10 +45,10 @@
                     <div class="todo-state">{{todo.status}}</div>
                     <div class="todo-content-container">
                         <div v-html="todo.rendered"
-                             v-if="!todo.editable"
+                             v-if="!editableTodos[todo.uid]"
                              class="todo-render">
                         </div>
-                        <div v-if="todo.editable" class="todo-editor-container">
+                        <div v-if="editableTodos[todo.uid]" class="todo-editor-container">
                             <simplemde class="todo-editor"
                                        :ref="'textareas_' + todo.uid"
                                        @notify="handleEditorChange(todo)"
