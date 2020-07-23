@@ -22,10 +22,9 @@
         <div id="app-container">
             <div id="app">
                 <div id="savestatus">
-                    <span v-if="changed">*</span>{{savetext()}}
+                    {{savetext()}}
                 </div>
                 <div class="header-container">
-                    <div></div>
                     <div :ref="'docTitle'"
                          spellcheck="false"
                          v-bind:class="{ changesUnsaved: changed }"
@@ -34,31 +33,32 @@
                          @blur="updateDocumentTitle">
                         {{state.documentTitle}}
                     </div>
-                    <div></div>
                 </div>
-                <div
-                    class="taskitem"
-                    v-for="todo in state.todos"
-                    v-bind:class="{ active: selectedTodos[todo.uid] }"
-                    :ref="'badges_' + todo.uid"
-                    @mousedown="e => (handleItemClick(todo, e.ctrlKey), e.stopPropagation())">
-                    <div class="todo-state">{{todo.status}}</div>
-                    <div class="todo-content-container">
-                        <div v-html="todo.rendered"
-                             v-if="!editableTodos[todo.uid]"
-                             class="todo-render">
+                <div id="all-content">
+                    <div
+                        class="taskitem"
+                        v-for="todo in state.todos"
+                        v-bind:class="{ active: selectedTodos[todo.uid] }"
+                        :ref="'badges_' + todo.uid"
+                        @mousedown="e => (handleItemClick(todo, e.ctrlKey), e.stopPropagation())">
+                        <div class="todo-state">{{todo.status}}</div>
+                        <div class="todo-content-container">
+                            <div v-html="todo.rendered"
+                                 v-if="!editableTodos[todo.uid]"
+                                 class="todo-render">
+                            </div>
+                            <div v-if="editableTodos[todo.uid]" class="todo-editor-container">
+                                <simplemde class="todo-editor"
+                                           :ref="'textareas_' + todo.uid"
+                                           @notify="handleEditorChange(todo)"
+                                           v-model="todo.original">
+                                </simplemde>
+                            </div>
                         </div>
-                        <div v-if="editableTodos[todo.uid]" class="todo-editor-container">
-                            <simplemde class="todo-editor"
-                                       :ref="'textareas_' + todo.uid"
-                                       @notify="handleEditorChange(todo)"
-                                       v-model="todo.original">
-                            </simplemde>
+                        <div class="todo-date">
+                            {{formatDate(todo.createDate)}}<br />
+                            <span v-if="todo.modDate"><span style="position: absolute; transform: translateX(-100%)">(</span>{{formatDate(todo.modDate)}})</span>
                         </div>
-                    </div>
-                    <div class="todo-date">
-                        {{formatDate(todo.createDate)}}<br />
-                        <span v-if="todo.modified"><span style="position: absolute; transform: translateX(-100%)">(</span>{{formatDate(todo.modDate)}})</span>
                     </div>
                 </div>
             </div>

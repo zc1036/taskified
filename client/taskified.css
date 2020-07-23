@@ -1,18 +1,22 @@
 
 #app {
     margin: auto;
+    max-width: 8in;
+}
+
+#all-content {
     display: table;
 }
 
-.taskitem, .header-container {
+.taskitem {
     display: table-row;
 }
 
 .todo-content-container {
-    width: 8in;
+    width: 100%;
 }
 
-.todo-state, .todo-content-container, .todo-date, .header-container > div {
+.todo-state, .todo-content-container, .todo-date {
     display: table-cell;
     vertical-align: top;
 }
@@ -36,9 +40,8 @@ html {
 }
 
 #savestatus {
-    position: fixed;
-    right: 1em;
-    top: 1em;
+    float: right;
+    padding: 1em;
     color: lightgray;
 }
 
@@ -46,7 +49,6 @@ html {
     font-weight: bold;
     padding: 3rem .5rem 1.5rem .5rem;
     position: relative;
-    left: 5px;
     font-size: 4rem;
 }
 
@@ -65,7 +67,7 @@ html {
     color: gray;
 }
 
-.todo-render > p:first-child {
+.todo-render > :first-child {
     padding-top: .3rem;
     margin-top: 0;
 }
@@ -79,6 +81,11 @@ html {
     padding-top: .2rem;
     padding-bottom: .2rem;
     margin: 0;
+}
+
+.todo-render pre {
+    max-width: 8in;
+    overflow-x: auto;
 }
 
 .todo-render ul {

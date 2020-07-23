@@ -89,13 +89,14 @@ function maketodo() {
         original: '*Markdown yo*',
         rendered: '',
         modified: false,
+        createDate: null,
+        modDate: null,
         uid: Math.random().toString(36).substring(2, 15)
     }
 
     rendertodo(todo)
 
     setCreateDate(todo, date)
-    setModDate(todo, date)
 
     return todo
 }
@@ -161,6 +162,9 @@ var app = new Vue({
             { shortcut: 'c',
               text: '✓',
               action: setTodoStatus },
+            { shortcut: 'C',
+              text: '✗',
+              action: setTodoStatus },
             { shortcut: 't',
               text: '☐',
               action: setTodoStatus },
@@ -178,7 +182,10 @@ var app = new Vue({
               action: setTodoStatus },
             { shortcut: 'w',
               text: '⚠',
-              action: setTodoStatus }
+              action: setTodoStatus },
+            { shortcut: 'x',
+              text: '☒',
+              action: setTodoStatus },
         ],
         activeContexts: [ ],
         changed: false,
@@ -189,7 +196,7 @@ var app = new Vue({
             if (this.saving) {
                 return 'saving...'
             } else if (this.state.lastSaveDate) {
-                return formatDate(this.state.lastSaveDate)
+                return 'saved ' + formatDate(this.state.lastSaveDate)
             } else {
                 return 'unsaved'
             }
@@ -378,7 +385,12 @@ var app = new Vue({
             if (event.key == 'Escape'
                 || event.key == "Enter" && event.ctrlKey)
             {
-                //todo.original = ed.value()
+                if (!todo.modified) {
+                    todo.modified = true
+                } else {
+                    setModDate(todo, new Date())
+                }
+
                 rendertodo(todo)
                 ed.toTextArea()
 
@@ -390,8 +402,6 @@ var app = new Vue({
         },
 
         handleEditorChange(todo) {
-            setModDate(todo, new Date())
-            todo.modified = !datesEqual(todo.modDate, todo.createDate)
         },
 
         handleGlobalKey(event) {
@@ -506,20 +516,26 @@ var app = new Vue({
 
                 break
 
+            case '<':
+                var selected = this.getSelectedTodos()
+                this.moveTodosUp(selected)
+                break
+
+            case '>':
+                var selected = this.getSelectedTodos()
+                this.moveTodosDown(selected)
+                break
+
             case 'n':
             case 'N':
                 if (this.state.todos.length > 0) {
                     var selected = this.getSelectedTodos()
 
-                    if (event.ctrlKey) {
-                        this.moveTodosDown(selected)
-                    } else {
-                        var idx = this.getTodoIdx(selected[selected.length - 1])
-                        var newtodo = this.getTodoFromIdx(idx + 1)
+                    var idx = this.getTodoIdx(selected[selected.length - 1])
+                    var newtodo = this.getTodoFromIdx(idx + 1)
 
-                        if (newtodo) {
-                            this.handleItemClick(newtodo, event.shiftKey)
-                        }
+                    if (newtodo) {
+                        this.handleItemClick(newtodo, event.shiftKey)
                     }
                 }
                 break
@@ -532,15 +548,11 @@ var app = new Vue({
                 if (this.state.todos.length > 0) {
                     var selected = this.getSelectedTodos()
 
-                    if (event.ctrlKey) {
-                        this.moveTodosUp(selected)
-                    } else {
-                        var idx = this.getTodoIdx(selected[0])
-                        var newtodo = this.getTodoFromIdx(idx - 1)
+                    var idx = this.getTodoIdx(selected[0])
+                    var newtodo = this.getTodoFromIdx(idx - 1)
 
-                        if (newtodo) {
-                            this.handleItemClick(newtodo, event.shiftKey)
-                        }
+                    if (newtodo) {
+                        this.handleItemClick(newtodo, event.shiftKey)
                     }
                 }
                 break
