@@ -31,7 +31,7 @@ function formatDate(date) {
     var datediff = today.getDate() - td.getDate()
     if (td.getFullYear() == today.getFullYear()) {
         if (td.getMonth() == today.getMonth()
-            && (datediff < 7))
+            && (datediff <= 1))
         {
             var hour = date.hour % 12
             var ampm = date.hour >= 12 ? 'pm' : 'am';
@@ -42,13 +42,13 @@ function formatDate(date) {
             var suffix = ''
             var prefix = ''
             if (datediff == 1) {
-                suffix = ' yest.'
+                prefix = ' yest.'
             } else if (datediff > 0 && datediff < 7) {
                 prefix = td.toLocaleString('en-us', { weekday: 'long' }) + ', '
             }
             return prefix + hour + ':' + (date.minute.toString().padStart(2, '0')) + ' ' + ampm + suffix
         } else if (td.getMonth() == today.getMonth() &&
-                   today.getDate() - td.getDate() < 7)
+                   datediff < 7)
         {
             return td.toLocaleString('en-us', { weekday: 'long' })
         } else {
