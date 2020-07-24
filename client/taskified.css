@@ -45,6 +45,10 @@ html {
     color: lightgray;
 }
 
+.header-container {
+    clear: both;
+}
+
 .header-container > div {
     font-weight: bold;
     padding: 3rem .5rem 1.5rem .5rem;
@@ -150,4 +154,24 @@ html {
 
 :target {
     background-color: #fffdcf;
+}
+
+#cpanel-container {
+    padding-top: 2em;
+}
+
+.existing-state-shortcut {
+    display: inline-block;
+    outline: 1px solid gray;
+    background: lightgray;
+    margin: .2em .4em .2em .4em;
+    padding: .2em;
+}
+
+#add-state-shortcut-form {
+    margin: 1em;
+}
+
+#add-state-shortcut-form > input[type="text"] {
+    width: 2em;
 }

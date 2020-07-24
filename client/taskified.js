@@ -149,47 +149,39 @@ var app = new Vue({
             documentTitle: 'New document',
             todos: [ maketodo() ],
             deletedTodos: [ ],
-            lastSaveDate: null
+            lastSaveDate: null,
+            setStateShortcuts: [
+                { shortcut: 's',
+                  text: '',
+                  pretty: '[clear]' },
+                { shortcut: 'c',
+                  text: '✓' },
+                { shortcut: 'C',
+                  text: '✗' },
+                { shortcut: 't',
+                  text: '☐' },
+                { shortcut: 'T',
+                  text: '☑' },
+                { shortcut: 'f',
+                  text: '➡' },
+                { shortcut: 'b',
+                  text: '⇨' },
+                { shortcut: 'i',
+                  text: 'ⓘ' },
+                { shortcut: 'w',
+                  text: '⚠' },
+                { shortcut: 'x',
+                  text: '☒' },
+            ]
         },
         selectedTodos: {},
         editableTodos: {},
         activeStatusShortcuts: [ ],
-        setTodoStateShortcuts: [
-            { shortcut: 's',
-              text: '',
-              pretty: '[clear]',
-              action: setTodoStatus },
-            { shortcut: 'c',
-              text: '✓',
-              action: setTodoStatus },
-            { shortcut: 'C',
-              text: '✗',
-              action: setTodoStatus },
-            { shortcut: 't',
-              text: '☐',
-              action: setTodoStatus },
-            { shortcut: 'T',
-              text: '☑',
-              action: setTodoStatus },
-            { shortcut: 'f',
-              text: '➡',
-              action: setTodoStatus },
-            { shortcut: 'b',
-              text: '⇨',
-              action: setTodoStatus },
-            { shortcut: 'i',
-              text: 'ⓘ',
-              action: setTodoStatus },
-            { shortcut: 'w',
-              text: '⚠',
-              action: setTodoStatus },
-            { shortcut: 'x',
-              text: '☒',
-              action: setTodoStatus },
-        ],
+        activeStatusShortcutCallback: null,
         activeContexts: [ ],
         changed: false,
-        saving: false
+        saving: false,
+        showControlPanel: false
     },
     methods: {
         savetext() {
@@ -433,11 +425,15 @@ var app = new Vue({
                 var sc = this.activeStatusShortcuts[i]
 
                 if (sc.shortcut == event.key) {
-                    sc.action.call(this, sc)
+                    this.activeStatusShortcutCallback(sc)
                     this.cancelStatusCapture()
                     return
                 }
             }
+        },
+
+        stopEvent(e) {
+            e.stopPropagation()
         },
 
         handleTodoKey(event) {
@@ -450,7 +446,8 @@ var app = new Vue({
                 }
 
                 this.activeContexts.push((e) => this.handleStatusKey(e))
-                this.activeStatusShortcuts = this.setTodoStateShortcuts
+                this.activeStatusShortcuts = this.state.setStateShortcuts
+                this.activeStatusShortcutCallback = setTodoStatus
                 event.preventDefault()
                 event.stopPropagation()
                 break
@@ -601,6 +598,66 @@ var app = new Vue({
             case 'x':
                 this.state.todos.push(maketodo())
                 break
+
+            case 'c':
+                this.showControlPanel = !this.showControlPanel
+                break
+            }
+        },
+
+        addStatusShortcut() {
+            var pretty = this.$refs.addStatus_pretty.value.trim()
+
+            if (pretty.length == 0) {
+                pretty = null
+            }
+
+            this.state.setStateShortcuts.push({
+                shortcut: this.$refs.addStatus_shortcut.value.trim(),
+                pretty: pretty,
+                text: this.$refs.addStatus_text.value.trim(),
+            })
+        },
+
+        lookupStateShortcutIndex(shortcut) {
+            for (var i = 0; i < this.state.setStateShortcuts.length; ++i) {
+                if (this.state.setStateShortcuts[i] == shortcut) {
+                    return i
+                }
+            }
+
+            return null
+        },
+
+        swapStateShortcuts(idx1, idx2) {
+            var elt1 = this.state.setStateShortcuts[idx1]
+            var elt2 = this.state.setStateShortcuts[idx2]
+
+            this.state.setStateShortcuts.splice(idx1, 1, elt2)
+            this.state.setStateShortcuts.splice(idx2, 1, elt1)
+        },
+
+        deleteStateShortcut(shortcut) {
+            var idx = this.lookupStateShortcutIndex(shortcut)
+
+            if (idx != null) {
+                this.state.setStateShortcuts.splice(idx, 1)
+            }
+        },
+
+        moveStateShortcutRight(shortcut) {
+            var idx = this.lookupStateShortcutIndex(shortcut)
+
+            if (idx != null && idx != this.state.setStateShortcuts.length - 1) {
+                this.swapStateShortcuts(idx, idx + 1)
+            }
+        },
+
+        moveStateShortcutLeft(shortcut) {
+            var idx = this.lookupStateShortcutIndex(shortcut)
+
+            if (idx != null && idx != 0) {
+                this.swapStateShortcuts(idx, idx - 1)
             }
         }
     },

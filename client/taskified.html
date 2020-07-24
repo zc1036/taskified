@@ -61,6 +61,31 @@
                         </div>
                     </div>
                 </div>
+                <div v-if="showControlPanel" id="cpanel-container">
+                    <div>
+                        <div
+                            v-for="shortcut in state.setStateShortcuts"
+                            class="existing-state-shortcut">
+                            {{shortcut.shortcut}}: {{shortcut.pretty || shortcut.text}}
+                            <input type="button" value="x" @click="deleteStateShortcut(shortcut)"></input>
+                            <input type="button" value="<" @click="moveStateShortcutLeft(shortcut)"></input>
+                            <input type="button" value=">" @click="moveStateShortcutRight(shortcut)"></input>
+                        </div>
+                    </div>
+                    <div id="add-state-shortcut-form">
+                        shortcut: <input type="text"
+                                         :ref="'addStatus_shortcut'"
+                                         @keydown="stopEvent">
+                        pretty (optional): <input type="text"
+                                                  :ref="'addStatus_pretty'"
+                                                  @keydown="stopEvent">
+                        status: <input type="text"
+                                       :ref="'addStatus_text'"
+                                       @keydown="stopEvent">
+                        <input type="button" id="new-status-indicator-add-btn" value="add"
+                               @click="addStatusShortcut"></input>
+                    </div>
+                </div>
             </div>
             <div id="statusbar-container">
                 <div v-if="activeStatusShortcuts.length > 0" id="statusbar">
