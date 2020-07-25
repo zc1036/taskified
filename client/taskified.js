@@ -108,7 +108,6 @@ Vue.component('simplemde', {
     mounted() {
         this.mde = new SimpleMDE({ element: this.$refs.area,
                                    shortcuts: { },
-                                   autofocus: true,
                                    toolbar: false,
                                    spellChecker: false,
                                    status: false })
@@ -478,6 +477,8 @@ var app = new Vue({
                                 this.handleEditorKey(todo, ed, e)
                                 e.stopPropagation()
                             })
+
+                            ed.codemirror.focus()
                         })
                 )
 
