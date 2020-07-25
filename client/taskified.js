@@ -71,8 +71,9 @@ function setCreateDate(todo, date) {
     todo.createDate = makeJsonFromDate(date)
 }
 
-function rendertodo(todo) {
-    todo.rendered = markdown(todo.original)
+function rendertodo(todo, text) {
+    text = text || todo.original
+    todo.rendered = markdown(text)
 }
 
 function maketodo() {
@@ -80,7 +81,7 @@ function maketodo() {
 
     var todo = {
         status: '',
-        original: '*Markdown yo*',
+        original: '',
         rendered: '',
         modified: false,
         createDate: null,
@@ -88,7 +89,7 @@ function maketodo() {
         uid: Math.random().toString(36).substring(2, 15)
     }
 
-    rendertodo(todo)
+    rendertodo(todo, '*Markdown yo*')
 
     setCreateDate(todo, date)
 
