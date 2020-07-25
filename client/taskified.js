@@ -391,6 +391,8 @@ var app = new Vue({
 
                     if (todo.modified) {
                         setModDate(todo, new Date())
+                    } else {
+                        setCreateDate(todo, new Date())
                     }
 
                     rendertodo(todo)
