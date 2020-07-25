@@ -1,12 +1,6 @@
 
-function sanitizeHtml(text) {
-    var div = document.createElement('div')
-    div.innerText = text
-    return div.innerHTML.replace(/<br>/g, '\n')
-}
-
 function markdown(text) {
-    return marked(sanitizeHtml(text))
+    return DOMPurify.sanitize(marked(text))
 }
 
 function datesEqual(a, b) {
@@ -119,7 +113,11 @@ Vue.component('simplemde', {
                                    spellChecker: false,
                                    status: false })
         this.mde.value(this.value)
-        this.mde.codemirror.on('changes', () => this.$emit('input', this.mde.value()))
+        this.mde.codemirror.on('changes', () => {
+            if (this.value != this.mde.value()) {
+                this.$emit('input', this.mde.value())
+            }
+        })
     },
     watch: {
         // Setup a watch to track changes,
@@ -176,6 +174,7 @@ var app = new Vue({
         },
         selectedTodos: {},
         editableTodos: {},
+        editingTodoText: {},
         activeStatusShortcuts: [ ],
         activeStatusShortcutCallback: null,
         activeContexts: [ ],
@@ -371,24 +370,34 @@ var app = new Vue({
                          this.$refs['badges_' + todo.uid][0].scrollIntoView({block: 'nearest'}))
         },
 
+        closeEditor(todo, ed) {
+            ed.toTextArea()
+            this.editableTodos[todo.uid] = false
+        },
+
         handleEditorKey(todo, ed, event) {
             var ta = this.$refs['textareas_' + todo.uid][0]
 
-            if (event.key == 'Escape'
-                || event.key == "Enter" && event.ctrlKey)
+            if (event.key == 'Enter' && event.ctrlKey)
             {
-                if (!todo.modified) {
+                var newtext = this.editingTodoText[todo.uid]
+
+                if (todo.original != newtext) {
+                    todo.original = newtext
+
+                    if (!todo.modified) {
+                        setModDate(todo, new Date())
+                    }
+
+                    rendertodo(todo)
                     todo.modified = true
-                } else {
-                    setModDate(todo, new Date())
                 }
 
-                rendertodo(todo)
-                ed.toTextArea()
+                this.closeEditor(todo, ed)
 
-                Vue.set(this.editableTodos, todo.uid, false)
-
-                event.stopPropagation()
+                event.preventDefault()
+            } else if (event.key == 'Escape') {
+                this.closeEditor(todo, ed)
                 event.preventDefault()
             }
         },
@@ -463,11 +472,11 @@ var app = new Vue({
                             var ta = this.$refs['textareas_' + todo.uid][0]
                             var ed = ta.mde
 
-                            ed.value(todo.original)
+                            Vue.set(this.editingTodoText, todo.uid, todo.original)
 
                             ed.codemirror.on('keydown', (mirror, e) => {
-                                e.stopPropagation()
                                 this.handleEditorKey(todo, ed, e)
+                                e.stopPropagation()
                             })
                         })
                 )

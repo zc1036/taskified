@@ -71,12 +71,12 @@ html {
     color: gray;
 }
 
-.todo-render > :first-child {
+.todo-render :first-child {
     padding-top: .3rem;
     margin-top: 0;
 }
 
-.todo-render > :last-child {
+.todo-render :last-child {
     padding-bottom: .3rem;
     margin-bottom: 0;
 }
@@ -174,4 +174,10 @@ html {
 
 #add-state-shortcut-form > input[type="text"] {
     width: 2em;
+}
+
+.todo-render blockquote {
+    border-left: 3px solid lightgray;
+    padding-left: .5em;
+    margin-left: .5em;
 }

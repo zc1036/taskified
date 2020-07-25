@@ -9,6 +9,7 @@
         <script src="/FileSaver.js"></script>
         <script src="/marked.min.js"></script>
         <script src="/simplemde.min.js"></script>
+        <script src="/purify.js"></script>
         <script src="/axios.js"></script>
         <title>Taskified</title>
 
@@ -51,7 +52,7 @@
                                 <simplemde class="todo-editor"
                                            :ref="'textareas_' + todo.uid"
                                            @notify="handleEditorChange(todo)"
-                                           v-model="todo.original">
+                                           v-model="editingTodoText[todo.uid]">
                                 </simplemde>
                             </div>
                         </div>
