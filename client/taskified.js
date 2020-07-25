@@ -152,6 +152,7 @@ var app = new Vue({
             todos: [ maketodo() ],
             deletedTodos: [ ],
             lastSaveDate: null,
+            showDates: true,
             setStateShortcuts: [
                 { shortcut: 's',
                   text: '',

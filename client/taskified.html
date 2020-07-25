@@ -58,13 +58,21 @@
                                 </simplemde>
                             </div>
                         </div>
-                        <div class="todo-date">
+                        <div class="todo-date"
+                             v-if="state.showDates">
                             {{formatDate(todo.createDate)}}<br />
                             <span v-if="todo.modDate"><span style="position: absolute; transform: translateX(-100%)">(</span>{{formatDate(todo.modDate)}})</span>
                         </div>
                     </div>
                 </div>
                 <div v-if="showControlPanel" id="cpanel-container">
+                    <h2>Control panel</h2>
+                    <div>
+                        <input type="checkbox"
+                               id="checkbox"
+                               v-model="state.showDates"> Show creation/modification dates
+                    </div>
+                    <hr />
                     <div>
                         <div
                             v-for="shortcut in state.setStateShortcuts"
