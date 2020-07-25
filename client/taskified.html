@@ -50,8 +50,10 @@
                             </div>
                             <div v-if="editableTodos[todo.uid]" class="todo-editor-container">
                                 <simplemde class="todo-editor"
+                                           :todo="todo"
                                            :ref="'textareas_' + todo.uid"
                                            @notify="handleEditorChange(todo)"
+                                           @keydown="handleEditorKey"
                                            v-model="editingTodoText[todo.uid]">
                                 </simplemde>
                             </div>

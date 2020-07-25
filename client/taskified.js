@@ -36,7 +36,7 @@ function formatDate(date) {
             var suffix = ''
             var prefix = ''
             if (datediff == 1) {
-                prefix = ' yest.'
+                prefix = 'yest. '
             } else if (datediff > 0 && datediff < 7) {
                 prefix = td.toLocaleString('en-us', { weekday: 'long' }) + ', '
             }
@@ -101,7 +101,7 @@ function setTodoStatus(a) {
 
 // This component mostly taken from https://megalomaniacslair.co.uk/pairing-simplemde-and-vuejs/
 Vue.component('simplemde', {
-    props: ['value'],
+    props: ['value', 'todo'],
     template: `
        <textarea ref="area"></textarea>
     `,
@@ -112,6 +112,11 @@ Vue.component('simplemde', {
                                    spellChecker: false,
                                    status: false })
         this.mde.value(this.value)
+
+        this.mde.codemirror.on('keydown', (mirror, e) => {
+            this.$emit('keydown', this.todo, this.mde, e)
+        })
+
         this.mde.codemirror.on('changes', () => {
             if (this.value != this.mde.value()) {
                 this.$emit('input', this.mde.value())
@@ -384,7 +389,7 @@ var app = new Vue({
                 if (todo.original != newtext) {
                     todo.original = newtext
 
-                    if (!todo.modified) {
+                    if (todo.modified) {
                         setModDate(todo, new Date())
                     }
 
@@ -399,6 +404,8 @@ var app = new Vue({
                 this.closeEditor(todo, ed)
                 event.preventDefault()
             }
+
+            event.stopPropagation()
         },
 
         handleEditorChange(todo) {
@@ -472,11 +479,6 @@ var app = new Vue({
                             var ed = ta.mde
 
                             Vue.set(this.editingTodoText, todo.uid, todo.original)
-
-                            ed.codemirror.on('keydown', (mirror, e) => {
-                                this.handleEditorKey(todo, ed, e)
-                                e.stopPropagation()
-                            })
 
                             ed.codemirror.focus()
                         })
