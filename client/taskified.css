@@ -88,7 +88,7 @@ html {
     overflow-x: auto;
 }
 
-.todo-render ul {
+.todo-render ul, .todo-render ol {
     padding-left: 1.5em;
 }
 
@@ -176,4 +176,11 @@ html {
     border-left: 3px solid lightgray;
     padding-left: .5em;
     margin-left: .5em;
+}
+
+.todo-render hr {
+    padding: 0 !important;
+    margin: 0;
+    border: none;
+    border-top: 1px solid lightgray;
 }
