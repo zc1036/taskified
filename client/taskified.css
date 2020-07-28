@@ -85,7 +85,8 @@ html {
 
 .todo-render pre {
     max-width: 8in;
-    overflow-x: auto;
+    overflow: auto;
+    padding: .5em;
 }
 
 .todo-render ul, .todo-render ol {
