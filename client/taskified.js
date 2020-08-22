@@ -46,7 +46,7 @@ function formatDate(date) {
         {
             return td.toLocaleString('en-us', { weekday: 'long' })
         } else {
-            return td.getMonth() + '/' + td.getMonth()
+            return (td.getMonth() + 1) + '/' + td.getDate()
         }
     }
 
@@ -616,7 +616,9 @@ var app = new Vue({
                 break
 
             case 'c':
-                this.showControlPanel = !this.showControlPanel
+                if (!event.ctrlKey && !event.metaKey) {
+                    this.showControlPanel = !this.showControlPanel
+                }
                 break
             }
         },
